@@ -29,6 +29,8 @@ function [x_center,y_center,x_leftedge,y_leftedge,x_rightedge,y_rightedge] = ext
     
     end
 
+
+    warning('off','map:shapefile:buildingIndexFromSHP'); 
     fs = shaperead(feature_shp);
     
     % Check for and get rid of nan nodes

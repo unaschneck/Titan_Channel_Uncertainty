@@ -1,19 +1,19 @@
-function filtered_names = remove_low_quality_SAR(pos_swaths)
+function [filtered_names,filtered_segs] = remove_low_quality_SAR(pos_swaths,pos_seg)
 % Only look at data points for which there is High Res SAR data (radar modes 3 and 11)
 %
 % INPUT:
 %   pos_swaths     = swath numbers that correspond to an observation (e.g., 55, 56)
+%   pos_seg        = associated segment number for swath ID
 %
 % OUTPUT:
 %   filtered_names = swath numbers that correspond to an observation AND have high res
 %                    radar data available (e.g., 56)
+%   filtered_segs  = associated segment numbers that correspond to filtered_names
 
-     % cwd = pwd;
-     % dir_sbdr = fullfile('data','BIDR_SBDR','allstuffed');
 
-     % cd(dir_sbdr)
      
      filtered_names = [];
+     filtered_segs  = [];
         for i =  1:numel(pos_swaths)
         
             sar_name = "t" + string(pos_swaths(i));
@@ -40,8 +40,9 @@ function filtered_names = remove_low_quality_SAR(pos_swaths)
             radar_modes = unique(info.radar_mode);
             if ismember(3,radar_modes) || ismember(11,radar_modes)
                 filtered_names(end+1) = pos_swaths(i);
+                filtered_segs(end+1) =  pos_seg(i);
             else
-                fprintf('...pass %s removed from list because no high quality SAR data availabilite\n',sar_name);
+                fprintf('...pass %s segment %i removed from list because no high quality SAR data availabilite\n',sar_name,pos_seg(i));
             end
         end
 

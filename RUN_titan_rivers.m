@@ -53,7 +53,7 @@ addpath(genpath(fullfile('functions')))                                         
 addpath(genpath('data'))                                                              % raw flyby datas and marked feature data
 
 % where is the data with the shape files
-Titan_rivers_dir = fullfile('data','TITAN_MAPPED_CHANNELS');                                % location of directory with all Titan mapped river shape files
+Titan_rivers_dir = fullfile('data','TITAN_MAPPED_CHANNELS');                          % location of directory with all Titan mapped river shape files
 Titan_river = dir(Titan_rivers_dir);                                                  % all sub folders containing specific river data
 
 addpath(genpath(Titan_rivers_dir));
@@ -90,10 +90,12 @@ avg_brightness = NaN(1,numel(Titan_river)-2);
 disp('==================================================================')
 disp('CALCULATING CHANNEL BRIGHTNESS METRICS')
 disp('==================================================================')
-for r = 1:numel(Titan_river)                                                         % loop through all feature data aka mapped channels (r ~ 26)
+for r = 9%:numel(Titan_river)                                                           % loop through all feature data aka mapped channels (r ~ 26)
+
+    %clearvars -except RIVER_TABLE k_table pp_all pp_in pp_out contrast downstream_brightness_distance brightness_profile_downstream avg_brightness r ellipsoid num_points max_num_subdivisions
 
 
-    if Titan_river(r).isdir && ~ismember(Titan_river(r).name , {'.','..'})           % ignore folders '.' and '..'
+    if Titan_river(r).isdir && ~ismember(Titan_river(r).name , {'.','..'})             % ignore folders '.' and '..'
 
         feature_name = Titan_river(r).name;
             
@@ -219,9 +221,10 @@ for r = 1:numel(Titan_river)                                                    
 
 
        % find which swath is associated with the feature based on central coordinates of feature
-        [feature_swaths_all,m_per_pixel] = find_swaths(lat_center,lon_center,ellipsoid);
-        feature_swaths = remove_low_quality_SAR(feature_swaths_all);                    % Remove low quality SAR passes (radar modes 3 and 11 are High Res SAR)
+        [feature_swaths_all,m_per_pixel,segment_number_all] = find_swaths(lat_center,lon_center,ellipsoid);
+        [feature_swaths,feature_seg] = remove_low_quality_SAR(feature_swaths_all,segment_number_all);                    % Remove low quality SAR passes (radar modes 3 and 11 are High Res SAR)
 
+        
 
         fprintf('swath resolution of ~ %i m per pixel\n',round(m_per_pixel));
 
@@ -231,11 +234,12 @@ for r = 1:numel(Titan_river)                                                    
             for cass_pass = 1:numel(feature_swaths)                                    % instead of user input in original code, just loop through all relevant passes 
     
                swath_number = feature_swaths(cass_pass);
+               seg_number   = feature_seg(cass_pass);
                fprintf('...checking data from t%i...\n',swath_number);
     
                sar_name = strcat('t',num2str(swath_number));
     
-               [sar_file,sar_data] = load_SAR_data(sar_name);
+               [sar_file,sar_data] = load_SAR_data(sar_name,seg_number);
                
                
 
@@ -397,6 +401,7 @@ ylabel(cb,'brightness (dB)','Rotation',270)
 grid on
 xlim([-180 180])
 ylim([-90 90])
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CALCULATE SINUOSITY OF TITAN RIVERS (in chunks)

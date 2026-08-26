@@ -1,4 +1,4 @@
-function [swath_number,swath_resolution] = find_swaths(feature_lat,feature_lon,ellipsoid)
+function [swath_number,swath_resolution,final_seg] = find_swaths(feature_lat,feature_lon,ellipsoid)
 % identify the swaths that contain input coordinates
 %
 % INPUT:
@@ -7,8 +7,9 @@ function [swath_number,swath_resolution] = find_swaths(feature_lat,feature_lon,e
 %   ellipsoid   = ellipsoid representation of Titan for distance calculations
 %
 % OUTPUT:
-%   swath_number = swath IDs containing at least one feature point
+%   swath_number     = swath IDs containing all feature points
 %   swath_resolution = meter per pixel at the center of the feature
+%   final_seg        = segment number for swath IDS
 
 
 persistent LAT LON swath seg % make these persistent so counter doesn't have to be reloaded each time which takes forever
@@ -73,12 +74,15 @@ for k = 1:numel(feature_lat)
     dist = lon_diff.^2 + (LAT - feature_lat(k)).^2;
     [~, ind]       = min(dist(:));
     [row,col]      = ind2sub(size(LON),ind);
-    swath_all(k,:) = reshape(swath(row,col,:), 1, []);
-    seg_all(k,:)   = reshape(seg(row,col,:), 1, []);
+    swath_all(k,:) = reshape(swath(row,col,:), 1, []); % checks all 10 observations (layers in 3rd dimension)
+    seg_all(k,:)   = reshape(seg(row,col,:), 1, []);   % checks all 10 observations (layers in 3rd dimension)
 end
 
 
 candidate_pairs = unique([swath_all(:), seg_all(:)], 'rows');
+
+% remove [0,0] pair 
+candidate_pairs(candidate_pairs(:,1)==0,:) = [];
 
 % remove any swaths that don't contain the entire river
 swath_number = [];
@@ -88,9 +92,6 @@ for p = 1:size(candidate_pairs,1)
     this_swath = candidate_pairs(p,1);
     this_seg   = candidate_pairs(p,2);
 
-   if this_seg ~= 1
-       continue
-   end
     total_covered = false(numel(feature_lat),1);
     
     for pt = 1:numel(feature_lat)
@@ -101,6 +102,10 @@ for p = 1:size(candidate_pairs,1)
         swath_number = [swath_number; this_swath];
         final_seg = [final_seg; this_seg];
         fprintf('...swath %i (segment %i) includes ALL of the river (%d of %d points)\n',this_swath,this_seg,nnz(total_covered),numel(feature_lat))
+        if this_seg ~= 1 % seg 1 is usually the main swath but not always
+            warning('%i swath and segment %i\n',this_swath,this_seg)
+            %continue
+        end
      else
         fprintf('...swath %d (segment %i) REMOVED: only %.1f%% of the river (%d of %d points)\n', this_swath, this_seg, 100*nnz(total_covered)/numel(feature_lat), nnz(total_covered), numel(feature_lat))
      end
@@ -111,14 +116,14 @@ end
 
 
 if isempty(swath_number)
-    error('No main swath contains the entire river')
+    error('No single flyby contains the entire river')
 end
 
-if ~all(final_seg == 1)
-    disp('swath    segment')
-    disp([swath_number(:) final_seg(:)])
-    error('non-main segment retained')
-end
+% if ~all(final_seg == 1)
+%     disp('swath    segment')
+%     disp([swath_number(:) final_seg(:)])
+%     error('non-main segment retained')
+% end
 
 fprintf('...closest swaths: %s\n', strjoin(string(swath_number),', '));
 
