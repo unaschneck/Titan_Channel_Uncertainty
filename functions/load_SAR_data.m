@@ -21,12 +21,20 @@ if seg_number == 1 % the main segment is not always the data for the river, chec
 
 else
     seg_file = dir(fullfile('data','BIDR_SBDR','uncorr', [sar_name, '*','seg',num2str(seg_number),'*'])); % finds associated file that includes tXX and segX in the name
-    uncorr_sar_file = seg_file.name;
+    if ~isempty(seg_file)
+        uncorr_sar_file = seg_file.name;
+    else
+        fprintf('...no associated sar file found for %s segment %i\n',sar_name,seg_number)
+        uncorr_sar_file = '';
+        uncorr_sar_data = NaN;
+        return
+
+    end
 
 end
 
 if ~isfile(fullfile('data','BIDR_SBDR','uncorr',uncorr_sar_file))
-        fprintf('...no associated SAR file found for %s\n',sar_name)
+        fprintf('...no associated sar file found for %s segment %i\n',sar_name,seg_number)
         uncorr_sar_file = '';
         uncorr_sar_data = NaN;
         return

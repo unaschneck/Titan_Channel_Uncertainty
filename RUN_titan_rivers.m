@@ -60,6 +60,11 @@ addpath(genpath(Titan_rivers_dir));
 
 fprintf('There are %i river features in %s\n',numel(Titan_river)-2,Titan_rivers_dir); % minus 2 to ignore folders '.' and '..'
 
+results_dir = 'results';
+if ~isfolder(results_dir)
+    mkdir(results_dir);
+end
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Extract data from ArcGIS files -> .mat files (covered in Frank's feature_geometry())
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -90,9 +95,8 @@ avg_brightness = NaN(1,numel(Titan_river)-2);
 disp('==================================================================')
 disp('CALCULATING CHANNEL BRIGHTNESS METRICS')
 disp('==================================================================')
-for r = 9%:numel(Titan_river)                                                           % loop through all feature data aka mapped channels (r ~ 26)
+for r = 1:numel(Titan_river)                                                           % loop through all feature data aka mapped channels (r ~ 26)
 
-    %clearvars -except RIVER_TABLE k_table pp_all pp_in pp_out contrast downstream_brightness_distance brightness_profile_downstream avg_brightness r ellipsoid num_points max_num_subdivisions
 
 
     if Titan_river(r).isdir && ~ismember(Titan_river(r).name , {'.','..'})             % ignore folders '.' and '..'
@@ -167,7 +171,7 @@ for r = 9%:numel(Titan_river)                                                   
 
         
         % PLOTS
-        figure('Name','Channel path and downstream width');
+        channel_fig = figure('Name','Channel path and downstream width');
         subplot(2,1,1)
         scatter(lon_center,lat_center,10,1:length(lat_center),"filled")
         colormap("winter")
@@ -265,44 +269,44 @@ for r = 9%:numel(Titan_river)                                                   
                [x_right_pix, y_right_pix] = transform_coordinates(lat_right, lon_right, sar_file);
 
 
-                figure('Name','Interpolated channel path');
-                subplot(4,1,1)
-                plot(lon_center,lat_center,'.k','DisplayName','Even spaced centerline points')
-                hold on;
-                plot(lon_left,lat_left,'.r','DisplayName','Even spaced left bank points')
-                plot(lon_right,lat_right,'.b','DisplayName','Even spaced right bank points')
-                xlabel('lon (deg)')
-                ylabel('lat (deg)')
-                grid on;
-                subplot(4,1,2)
-                plot(xd_center,yd_center,'.k','DisplayName','Even spaced centerline points (dimensionless, normalized to average width)')
-                hold on;
-                plot(xd_left,yd_left,'.r','DisplayName','Even spaced left bank points (dimensioless, normalized to average width)')
-                plot(xd_right,yd_right,'.b','DisplayName','Even spaced right bank points (dimensionless, normalized to average width)')
-                xlabel('x (dimensionless)')
-                ylabel('y (dimensionless)')
-                grid on;
-                drawnow;
-                subplot(4,1,3)
-                plot(x_center,y_center,'.k')
-                hold on;
-                plot(x_left,y_left,'.r')
-                plot(x_right,y_right,'.b')
-                xlabel('EAST-WEST (m)')
-                ylabel('NORTH-SOUTH (m)')
-                grid on;
-                drawnow;
-                subplot(4,1,4)
-                plot(x_center_pix,y_center_pix,'.k')
-                hold on;
-                plot(x_left_pix,y_left_pix,'.r')
-                plot(x_right_pix,y_right_pix,'.b')
-                xlabel('pixel index in SAR (col)')
-                ylabel('pixel index in SAR (row)')
-                set(gca,'YDir','reverse')
-                set(gca,'Xdir','reverse')
-                grid on;
-                drawnow;
+                % figure('Name','Interpolated channel path');
+                % subplot(4,1,1)
+                % plot(lon_center,lat_center,'.k','DisplayName','Even spaced centerline points')
+                % hold on;
+                % plot(lon_left,lat_left,'.r','DisplayName','Even spaced left bank points')
+                % plot(lon_right,lat_right,'.b','DisplayName','Even spaced right bank points')
+                % xlabel('lon (deg)')
+                % ylabel('lat (deg)')
+                % grid on;
+                % subplot(4,1,2)
+                % plot(xd_center,yd_center,'.k','DisplayName','Even spaced centerline points (dimensionless, normalized to average width)')
+                % hold on;
+                % plot(xd_left,yd_left,'.r','DisplayName','Even spaced left bank points (dimensioless, normalized to average width)')
+                % plot(xd_right,yd_right,'.b','DisplayName','Even spaced right bank points (dimensionless, normalized to average width)')
+                % xlabel('x (dimensionless)')
+                % ylabel('y (dimensionless)')
+                % grid on;
+                % drawnow;
+                % subplot(4,1,3)
+                % plot(x_center,y_center,'.k')
+                % hold on;
+                % plot(x_left,y_left,'.r')
+                % plot(x_right,y_right,'.b')
+                % xlabel('EAST-WEST (m)')
+                % ylabel('NORTH-SOUTH (m)')
+                % grid on;
+                % drawnow;
+                % subplot(4,1,4)
+                % plot(x_center_pix,y_center_pix,'.k')
+                % hold on;
+                % plot(x_left_pix,y_left_pix,'.r')
+                % plot(x_right_pix,y_right_pix,'.b')
+                % xlabel('pixel index in SAR (col)')
+                % ylabel('pixel index in SAR (row)')
+                % set(gca,'YDir','reverse')
+                % set(gca,'Xdir','reverse')
+                % grid on;
+                % drawnow;
 
                % transform width into number of pixels 
                %width_centerline = m2pix(width_centerline,m_per_pixel);
@@ -339,7 +343,7 @@ for r = 9%:numel(Titan_river)                                                   
                         plot(ax_bright_down,downstream_brightness_distance{k_table,cass_pass},brightness_profile_downstream{k_table,cass_pass},'-o','MarkerFaceColor',my_color(1,:),'Color',my_color(1,:),'LineWidth',3,'DisplayName',sprintf('%i segments',max_num_subdivisions))
                         
                         %cross stream with contrast outside channel
-                        [pp_all{k_table,cass_pass},pp_in{k_table,cass_pass},pp_out{k_table,cass_pass},contrast{k_table,cass_pass}] = calc_brightness_profile_cross_stream(lat_center,lon_center,lat_left,lon_left,lat_right,lon_right,ellipsoid,sar_data,sar_file,width_centerline,start_row,start_col,max_num_subdivisions);
+                        [pp_all{k_table,cass_pass},pp_in{k_table,cass_pass},pp_out{k_table,cass_pass},contrast{k_table,cass_pass}] = calc_brightness_profile_cross_stream(feature_name,lat_center,lon_center,lat_left,lon_left,lat_right,lon_right,ellipsoid,sar_data,sar_file,width_centerline,start_row,start_col,max_num_subdivisions);
                         plot(ax_bright_across,pp_all{k_table,cass_pass},'-k','LineWidth',3,'DisplayName','all')
                         plot(ax_bright_across,pp_in{k_table,cass_pass},'-b','LineWidth',3,'DisplayName','inside')
                         plot(ax_bright_across,pp_out{k_table,cass_pass},'-r','LineWidth',3,'DisplayName','outside')
@@ -379,14 +383,22 @@ for r = 9%:numel(Titan_river)                                                   
                 k_table = k_table + 1;                                                                      % counter for table rows
         end
             
+            saveas(channel_fig,fullfile(results_dir,[feature_name, '_channel_path.png']))
+            saveas(fig_bright_down,fullfile(results_dir,[feature_name, '_downstream_brightness.png']))
+            saveas(fig_bright_across,fullfile(results_dir,[feature_name, '_crosschannel_brightness.png']))
+
     end
 
   
+
+
+
     close all % closes all figures for each river before moving on so a truly egregious amount of figures aren't created
     
 end
 
 
+%writetable(RIVER_TABLE,'Titan_Rivers.csv')
 
 % MAKE A MAP OF BRIGHTNESS ON THE GLOBE
 mapped_index = ~isnan(RIVER_TABLE.("Mean Brightness")); % filter out empty rows

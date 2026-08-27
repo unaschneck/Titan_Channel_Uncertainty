@@ -102,10 +102,10 @@ for p = 1:size(candidate_pairs,1)
         swath_number = [swath_number; this_swath];
         final_seg = [final_seg; this_seg];
         fprintf('...swath %i (segment %i) includes ALL of the river (%d of %d points)\n',this_swath,this_seg,nnz(total_covered),numel(feature_lat))
-        if this_seg ~= 1 % seg 1 is usually the main swath but not always
-            warning('%i swath and segment %i\n',this_swath,this_seg)
-            %continue
-        end
+        % if this_seg ~= 1 % seg 1 is usually the main swath but not always
+        %     warning('%i swath and segment %i\n',this_swath,this_seg)
+        %     %continue
+        % end
      else
         fprintf('...swath %d (segment %i) REMOVED: only %.1f%% of the river (%d of %d points)\n', this_swath, this_seg, 100*nnz(total_covered)/numel(feature_lat), nnz(total_covered), numel(feature_lat))
      end

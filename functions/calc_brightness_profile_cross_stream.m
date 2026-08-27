@@ -1,4 +1,4 @@
-function [profile_brightness_all,profile_brightness_inside, profile_brightness_outside,contrast_all] = calc_brightness_profile_cross_stream(lat_center,lon_center,lat_left,lon_left,lat_right,lon_right,ellipsoid,sar_data,sar_file,width,start_row,start_col,num_subdivisions)
+function [profile_brightness_all,profile_brightness_inside, profile_brightness_outside,contrast_all] = calc_brightness_profile_cross_stream(feature_name,lat_center,lon_center,lat_left,lon_left,lat_right,lon_right,ellipsoid,sar_data,sar_file,width,start_row,start_col,num_subdivisions)
 % calculates the crossstream SAR brightness of the feature downstream along discrete cross-sections , including contrast with surronding landscapes
 % INPUT:
 %   lat_center                 = latitude (deg) of centerline
@@ -467,11 +467,18 @@ for i = 1:num_subdivisions
             drawnow
 
 
-          % if i == 1
-          %     gif([sar_file '.gif'],'DelayTime',1)
-          % else
-          %     gif;
-          % end
+            if make_plot
+
+                if i == 1
+                    extract_flyby = extractBefore(sar_file, '_');
+                    gif_name = fullfile(pwd,'results', [feature_name, '_',extract_flyby,'.gif']);
+                    
+                    gif(gif_name, 'DelayTime', 1);
+                else
+                    gif;
+                end
+
+            end
 
 
     
