@@ -1,15 +1,15 @@
 function [uncorr_sar_file,uncorr_sar_data] = load_SAR_data(sar_name,seg_number)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % read in data from cub file
-%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % INPUT:
-%   sar_name   = name of pass which will be the first part of the cub file name
-%   seg_number = segment number for pass 
+%   sar_name          = name of pass which will be the first part of the cub file name
+%   seg_number        = segment number for pass 
 %
 % OUTPUT:
-%   sar_file   = filename containing feature data (.cub)
-%   sar_data   = data from .cub file read in using read_isis external function
-
-
+%   uncorr_sar_file   = filename containing feature data (.cub)
+%   uncorr_sar_data   = data from .cub file read in using read_isis external function
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 if seg_number == 1 % the main segment is not always the data for the river, check the segment number if its not listed as 1

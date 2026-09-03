@@ -1,9 +1,11 @@
 function  [downstream_brightness_distance,brightness_profile]= calc_brightness_profile_downstream(x_feature,y_feature,sar_data,brightness_vals,x_left,y_left,x_right,y_right,downstream_distance,num_subdivisions)
-%   calc along-channel brightness profile by measuring the average radar brightness within each subsection of the feature and
-%   associating that measurement with the distance along the central path to the center of the subsection.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% calculate along-channel brightness profile by measuring the average radar brightness within each subsection of the feature and
+% associating that measurement with the distance along the central path to the center of the subsection.
 % INPUT:
 %   x_feature                      : x coordinates of extracted SAR pixels (2D array of size brightness vals)
 %   y_feature                      : y coordinates of extracted SAR pixels (2D array of size brightness vals)
+%   sar_data                       : subset of sar data with river
 %   brightness_vals                : SAR brightness of each extracted pixel (2D array)
 %   x_left,y_left                  : left feature boundary coordinates
 %   x_right,y_right                : right feature boundary coordinates
@@ -13,6 +15,7 @@ function  [downstream_brightness_distance,brightness_profile]= calc_brightness_p
 % OUTPUT:
 %   downstream_brightness_distance : distance to center of each subsection downstream
 %   brightness_profile             : mean brightness in each subsection
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 make_plot = 1;
 

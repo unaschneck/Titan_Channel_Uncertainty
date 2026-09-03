@@ -1,21 +1,28 @@
 function [profile_brightness_all,profile_brightness_inside, profile_brightness_outside,contrast_all] = calc_brightness_profile_cross_stream(feature_name,lat_center,lon_center,lat_left,lon_left,lat_right,lon_right,ellipsoid,sar_data,sar_file,width,start_row,start_col,num_subdivisions)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % calculates the crossstream SAR brightness of the feature downstream along discrete cross-sections , including contrast with surronding landscapes
 % INPUT:
+%   feature_name               = unique name of mapped feature (e.g., BigBend)
 %   lat_center                 = latitude (deg) of centerline
 %   lon_center                 = longitude (deg) of centerline
 %   lat_left                   = latitude (deg) of left bank
 %   lon_left                   = longitude (deg) of left bank
 %   lat_right                  = latitude (deg) of right bank
 %   lon_right                  = longitude (deg) of right bank
+%   ellipsoid                  = ellipsoid to use (e.g., ellipsoid = [2575000,0] for Titan)
 %   sar_data                   = SAR brightness of the pass (2D array)
+%   sar_file                   = filename containing sar data
 %   width                      = 1D array of width values along the centerline at each (x_center,y_center) (m)
+%   start_row                  = index of first row of subset of data with river
+%   start_col                  = index first column of subset of data with river
 %   num_subdivisions           = number of subdivisions in downstream direction to cut river into for a sense of the downstream variability in cross-stream brightness
 % OUTPUT:
 %   profile_brightness_all     = the average brightness of the feature, including its surrondings (3.5x local width)
 %   profile_brightness_inside  = the average brightness of only pixels within the left and right banks
 %   profile_brightness_outside = the average brightness outside of the pixels contained within the left and right bank (aka the surronding terrain)
 %   contrast_all               = the average contrast between the brightness inside the feature and the average brightness in the nearby surronding terrain 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
 sanity_check = 1;
 
 % coordinates of the centerline of the feature in East-West dimensions (m)
@@ -40,7 +47,7 @@ sanity_check = 1;
 make_plot = 1;
 
 n_downstream =  10; % number of downstream samples
-n_crossstream = 10; % number of crosstream samples
+n_crossstream = 11; % number of crosstream samples
 
 dis_away_from_bank = 3; % factor of width away from bank (e.g., 3 = 3 widths away from the bank on either side)
 
@@ -164,7 +171,6 @@ for i = 1:num_subdivisions
         
         rightC_X = xr + W*Nx;
         rightC_Y = yr + W*Ny;
-       
 
         % each extended center pushed another W up and downstream along the tangent to form the vertices
         P1_X = rightC_X + W*Tx;   P1_Y = rightC_Y + W*Ty;   % right, downstream
@@ -192,6 +198,7 @@ for i = 1:num_subdivisions
         % % Plot bank-to-bank line
         % plot([xl xr],[yl yr],'b-','LineWidth',3);
 
+        total_cross_distance = pdist([rightC_X,rightC_Y;leftC_X,leftC_Y],"euclidean");
         if sanity_check
             leftbank2rightbank = pdist([xl,yl;xr,yr],"euclidean");
             leftbank2leftedge  = pdist([xl,yl;leftC_X,leftC_Y],"euclidean");
@@ -233,8 +240,7 @@ for i = 1:num_subdivisions
 
         end
 
-        
-    
+       
         % plot(leftC_X,leftC_Y,'ok');
         % plot(rightC_X,rightC_Y,'ok');
         % plot([xl leftC_X],[yl leftC_Y],'r-','LineWidth',3);
@@ -254,7 +260,7 @@ for i = 1:num_subdivisions
         % plot(rightC_X,rightC_Y,'ms','MarkerFaceColor','m','MarkerSize',8);
 
 
-        % convert points in meter back to degrees and then to associated pixel index
+       % convert points in meter back to degrees and then to associated pixel index
        [P1_lat,P1_lon] = meters2deg(P1_X,P1_Y,up_right(c),ellipsoid,lat_center(1),lon_center(1));
        [P1_X_pix,P1_Y_pix] = transform_coordinates(P1_lat,P1_lon,sar_file);
         % convert points in meter back to degrees and then to associated pixel index
@@ -267,12 +273,10 @@ for i = 1:num_subdivisions
        [P4_lat,P4_lon] = meters2deg(P4_X,P4_Y,up_left(c),ellipsoid,lat_center(1),lon_center(1));
        [P4_X_pix,P4_Y_pix] = transform_coordinates(P4_lat,P4_lon,sar_file);
 
-
        [P1_Y_pix,P1_X_pix] = index_for_subset(P1_Y_pix,P1_X_pix,start_row,start_col);
        [P2_Y_pix,P2_X_pix] = index_for_subset(P2_Y_pix,P2_X_pix,start_row,start_col);
        [P3_Y_pix,P3_X_pix] = index_for_subset(P3_Y_pix,P3_X_pix,start_row,start_col);
        [P4_Y_pix,P4_X_pix] = index_for_subset(P4_Y_pix,P4_X_pix,start_row,start_col);
-
 
        X_REGION = [P1_X_pix P2_X_pix P4_X_pix P3_X_pix P1_X_pix];   % right-down -> left-down -> left-up -> right-up -> close rectangle
        Y_REGION = [P1_Y_pix P2_Y_pix P4_Y_pix P3_Y_pix P1_Y_pix];
@@ -319,7 +323,6 @@ for i = 1:num_subdivisions
         xperm_B = P3_X_pix + t_cross.*(P4_X_pix - P3_X_pix);
         yperm_B = P3_Y_pix + t_cross.*(P4_Y_pix - P3_Y_pix);
 
-
         b_inside{i} = nan(n_downstream,n_crossstream);
         b_outside{i} = nan(n_downstream,n_crossstream);
 
@@ -340,13 +343,14 @@ for i = 1:num_subdivisions
         end
 
         b_all{i} = b{i};
+
         % mean across downstream direction for this subsection
         mean_crossstream_inside_per_sub{i} = mean(b_inside{i},1,'omitnan');
         mean_crossstream_outside_per_sub{i} = mean(b_outside{i},1,'omitnan');
         mean_crosstrream_all{i} = mean(b{i});
 
         I_feature = mean_crossstream_inside_per_sub{i};
-        I_surronding =mean_crossstream_outside_per_sub{i};
+        I_surronding = mean_crossstream_outside_per_sub{i};
 
         contrast_per_sub(i) = calculate_contrast(mean_crossstream_inside_per_sub{i},mean_crossstream_outside_per_sub{i});
 
@@ -362,28 +366,18 @@ for i = 1:num_subdivisions
 
             plot(X_REGION, Y_REGION,'-k')
 
-
             plot(x_center(c_idx),y_center(c_idx),'or')
             plot(x_center(c), y_center(c),'or','MarkerFaceColor','r')
 
             for ii = 1:n_downstream
                 % plot([xperm_L(ii) xperm_R(ii)],[yperm_L(ii) yperm_R(ii)],'-k','LineWidth',0.5)
-
-
-
                 plot(px{i}(ii,inside{ii}), py{i}(ii,inside{ii}), 'sm', 'MarkerFaceColor','m')
-
-
                 plot(px{i}(ii,~inside{ii}), py{i}(ii,~inside{ii}),'sb', 'MarkerFaceColor','b')
-
-
             end
 
             % for ii = 1:n_crossstream
             %     plot([xperm_T(ii) xperm_B(ii)],[yperm_T(ii) yperm_B(ii)],'-k','LineWidth',0.5)
             % end
-
-
             % plot(x_left_pix,y_left_pix,'.r')
             % plot(x_right_pix,y_right_pix,'.r')
 
@@ -427,44 +421,28 @@ for i = 1:num_subdivisions
             grid on;
             hold on
             
-            x_cross = linspace(0,1,n_crossstream);
-            
+           x_cross = linspace(-1,1,n_crossstream);
+
             for ii = 1:n_downstream
-            
+                
+                % relative to midpoint of the points within the channel
+                x_centered_m = x_cross.*total_cross_distance;
+
                 brightness_across = b{i}(ii,:);
+
+                scatter(x_centered_m./1000, brightness_across, 40, ~inside{ii}, 'filled')
             
-                % Cross-stream points that are inside the channel
-                idx_inside = find(inside{ii});
-            
-                if ~isempty(idx_inside)
-            
-                    % Midpoint of the points within the channel
-                    center_idx = (idx_inside(1) + idx_inside(end)) / 2;
-            
-                    % Cross-stream coordinate centered on channel midpoint
-                    x_centered = x_cross - interp1(1:n_crossstream, ...
-                                                    x_cross, ...
-                                                    center_idx);
-            
-                else
-                    % No points inside the channel
-                    x_centered = x_cross;
-                end
-            
-                scatter(x_centered, brightness_across, 40, ~inside{ii}, 'filled')
-            
-                plot(x_centered, brightness_across, '-o', ...
-                    'Color', line_color(ii,:), ...
-                    'LineWidth', 2)
+                plot(x_centered_m./1000, brightness_across, '-o', 'Color', line_color(ii,:), 'LineWidth', 2)
             
             end
-            
+
             % xline(0,'--k','Channel center','LineWidth',1.5)
             
-            xlabel('cross stream distance from channel center')
+            xlabel('cross stream distance from channel center (km)')
             ylabel('brightness')
-            xlim([-1 1])
-            drawnow
+            xlim([min(x_centered_m)/1000 max(x_centered_m)/1000])
+
+            drawnow;
 
 
             if make_plot
@@ -480,23 +458,13 @@ for i = 1:num_subdivisions
 
             end
 
-
-    
-
-
-
-
-
         end
 
 end
 
 profile_brightness_inside = mean(cell2mat(mean_crossstream_inside_per_sub(:)),1,'omitnan');
-
 profile_brightness_outside = mean(cell2mat(mean_crossstream_outside_per_sub(:)),1,'omitnan');
-
 profile_brightness_all = mean(reshape(cell2mat(b_all),[],n_crossstream),1,'omitnan');
-
 contrast_all = mean(contrast_per_sub,'omitnan');
 
 

@@ -41,7 +41,15 @@ close all
 %                 |--- low-res
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+num_subdivisions = 10;
+
 data_dir = fullfile(pwd,'data','EARTH_ANALOGUES');
+
+results_dir = 'results';
+if ~isfolder(results_dir)
+    mkdir(results_dir);
+end
+
 
 RESOLUTIONS = [350 175 30]; % m/pixel
 EARTH_RIVERS = {'Alaska','Australia','Canada'}; 
@@ -57,7 +65,7 @@ max_num_subdivisions = 10;                                                      
 avg_width = NaN(numel(EARTH_RIVERS),numel(RESOLUTIONS));
 std_width = NaN(numel(EARTH_RIVERS),numel(RESOLUTIONS));
 
-figure('Name','Res vs Width')
+res_width_fig = figure('Name','Res vs Width');
 ax1 = gca;
 xlabel('Resolution (m/pixel)')
 ylabel('Width (m)')
@@ -71,15 +79,15 @@ mycolor = orderedcolors("dye");
 for i = 1:numel(EARTH_RIVERS)
 
     disp('==================================================================')
-    fprintf('For a river in %s\n',upper(EARTH_RIVERS{i}));
+    fprintf('River in %s:\n',upper(EARTH_RIVERS{i}));
 
     for j = 1:numel(RES_FILES)
 
-            data_loc = fullfile(data_dir,EARTH_RIVERS{i},'shapefiles',RES_FILES{j});
+            shp_data_loc = fullfile(data_dir,EARTH_RIVERS{i},'shapefiles',RES_FILES{j});
 
             % extract centerline and bank data from shapefile
-            [x_center,y_center,x_leftedge,y_leftedge,x_rightedge,y_rightedge] = extract_from_shp(data_loc,'Earth');
-            if isempty(x_center)
+            [x_center,y_center,x_leftedge,y_leftedge,x_rightedge,y_rightedge] = extract_from_shp(shp_data_loc,'Earth');
+            if isempty(x_leftedge)
                 warning('no available shapefile for %s at resolution %i m/pix\n',EARTH_RIVERS{i},RESOLUTIONS(j))
                 continue
             end
@@ -122,11 +130,7 @@ for i = 1:numel(EARTH_RIVERS)
             % convert left bank coordinates into distance from centerline
             downstream_left = calc_dis_edge(lon_center,lat_center,lon_left,lat_left,ellipsoid);
 
-            % make sure the lines are mapped in the same orientation downstream
-            [x_center,y_center,x_leftedge,y_leftedge,x_rightedge,y_rightedge] = fix_mapping_order(x_center,y_center,x_leftedge,y_leftedge,x_rightedge,y_rightedge);
-
-
-            figure('Name','Channel path and downstream width');
+            path_downstream_fig = figure('Name','Channel path and downstream width');
 
             subplot(2,1,1)
             scatter(lon_center,lat_center,10,1:length(lat_center),"filled")
@@ -150,6 +154,26 @@ for i = 1:numel(EARTH_RIVERS)
             grid on;
             ylim([0 max(river_width)+100])
             drawnow;
+
+            radar_data_loc = fullfile(data_dir,EARTH_RIVERS{i},'rasters',[RES_FILES{j} '.tif']);
+           
+            % extract brightness data of channel
+            [x_feature,y_feature,radar_vals,brightness_vals] = extract_earth_RADAR(radar_data_loc,lon_left,lat_left,lon_right,lat_right);
+
+            % transform into meters relative to starting position in local east, north, up coordinates (ENU)
+           [x_center, y_center]           = deg2meters(lat_center,lon_center,ellipsoid,lat_center(1),lon_center(1));
+           [x_left, y_left]               = deg2meters(lat_left,lon_left, ellipsoid,lat_center(1),lon_center(1));
+           [x_right, y_right]             = deg2meters(lat_right,lon_right,ellipsoid,lat_center(1),lon_center(1));
+
+           % calculate downstream brightness
+           
+           [downstream_brightness_distance,brightness_profile] = calc_brightness_profile_downstream(x_feature,y_feature,radar_vals,brightness_vals,x_left,y_left,x_right,y_right,downstream_distance,num_subdivisions)
+           % 
+           %  % calculate cross stream brightness and contrast
+           % 
+
+
+
     end
 
     errorbar(ax1,RESOLUTIONS,avg_width(i,:),std_width(i,:),'-s','Color',mycolor(i,:),'LineWidth',2,'DisplayName',EARTH_RIVERS{i})
@@ -158,147 +182,4 @@ end
 
 legend(ax1,'show')
 
-% USING MAT FILES INSTEAD OF SHAPEFILES
-% AVG_WIDTH = NaN(numel(EARTH_RIVERS),numel(RESOLUTIONS));
-% STD_WIDTH =  NaN(numel(EARTH_RIVERS),numel(RESOLUTIONS));
-% 
-% for i = 1:numel(EARTH_RIVERS)
-% 
-% 
-%     for j = 1:numel(RESOLUTIONS)
-% 
-%         river_bin = [];
-%         river_bout = [];
-% 
-%         river_dir = fullfile(data_dir,EARTH_RIVERS{i},'geometry',RES_FILES{j},'geometry.mat');           % 30 m/pixels
-%         if ~isfile(river_dir)
-%             warning('no file found: %s\n',river_dir)
-%             river_downstream{i,j} = NaN;
-%             river_width{i,j} = NaN;
-%             river_balong{i,j} = NaN;
-%             river_contrast(i,j) = NaN;
-% 
-%             continue
-%         end
-%         disp(river_dir)
-% 
-%         river = load(river_dir);
-%         river_downstream{i,j} = river.geometry.distance;
-%         river_width{i,j} = river.geometry.width;
-% 
-%         river_balong{i,j} = river.radar_data.brightness_along;
-% 
-%         for k = 1:numel(river.radar_data.cross_sections)
-%             river_bin = [river_bin river.radar_data.cross_sections(k).brightness_in];
-%             river_bout = [river_bout river.radar_data.cross_sections(k).brightness_out];
-% 
-%         end
-%         river_contrast(i,j)   = calculate_contrast(river_bin,river_bout);
-% 
-%         AVG_WIDTH(i,j) = mean(river_width{i,j}, 'omitmissing');
-%         STD_WIDTH(i,j) = std(river_width{i,j}, 0, 'omitmissing');
-%     end
-% 
-% 
-% end
-% 
-% 
-% %% Feature width along river
-% 
-% 
-% 
-% for i = 1:numel(EARTH_RIVERS)
-%     figure
-%     hold on;
-%     grid on;
-% 
-%     title('Feature width');
-%     xlabel('Distance (km)');
-%     ylabel('Width (m)');
-%     for j = 1:numel(RESOLUTIONS)
-% 
-%         if isnan(river_downstream{i,j})
-%             continue
-%         end
-% 
-%         plot(river_downstream{i,j} ./ 1000, ...
-%              river_width{i,j}, ...
-%              '-o', ...
-%              'Color', mycolor(j,:), ...
-%              'MarkerFaceColor', mycolor(j,:), ...
-%              'LineWidth', 2, ...
-%              'DisplayName', sprintf('%s, Resolution = %g pixels/m', ...
-%                                     EARTH_RIVERS{i}, RESOLUTIONS(j)));
-%     end
-%     legend('show','Location','best');
-% 
-% end
-% 
-% 
-% 
-% %% Average feature width vs resolution
-% 
-% figure;
-% hold on;
-% grid on;
-% 
-% title('Feature width vs resolution');
-% xlabel('Spatial resolution (pixels/meter)');
-% ylabel('Average width (m)');
-% 
-% for i = 1:numel(EARTH_RIVERS)
-%     plot(RESOLUTIONS, ...
-%          AVG_WIDTH(i,:), ...
-%          '-o', ...
-%          'LineWidth', 2, ...
-%          'Color', mycolor(i,:), ...
-%          'DisplayName', EARTH_RIVERS{i});
-% end
-% 
-% legend('show','Location','best');
-% 
-% 
-% %% Width standard deviation vs resolution
-% 
-% figure;
-% hold on;
-% grid on;
-% 
-% title('Width deviation vs spatial resolution');
-% xlabel('Spatial resolution (pixels/meter)');
-% ylabel('STD of width (m)');
-% 
-% for i = 1:numel(EARTH_RIVERS)
-%     plot(RESOLUTIONS, ...
-%          STD_WIDTH(i,:), ...
-%          '-o', ...
-%          'LineWidth', 2, ...
-%          'Color', mycolor(i,:), ...
-%          'DisplayName', EARTH_RIVERS{i});
-% end
-% 
-% legend('show','Location','best');
-% 
-% 
-% %% Brightness contrast vs resolution
-% 
-% figure;
-% hold on;
-% grid on;
-% 
-% title('Brightness contrast vs spatial resolution');
-% xlabel('Spatial resolution (pixels/meter)');
-% ylabel('Brightness contrast');
-% 
-% for i = 1:numel(EARTH_RIVERS)
-%     plot(RESOLUTIONS, ...
-%          river_contrast(i,:), ...
-%          '-o', ...
-%          'LineWidth', 2, ...
-%          'Color', mycolor(i,:), ...
-%          'DisplayName', EARTH_RIVERS{i});
-% end
-% 
-% legend('show','Location','best');
-
-
+%saveas(channel_fig,fullfile(results_dir,['EARTH_channel_path.png']))

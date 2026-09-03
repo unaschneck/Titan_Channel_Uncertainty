@@ -1,6 +1,5 @@
 /data/BIDR_SBDR/allstuffed
 /data/BIDR_SBDR/uncorr
-/data/EARTH_ANALOGUES/Alaska
 /data/EARTH_ANALOGUES/Australia
 /data/EARTH_ANALOGUES/Canada
 /data/EARTH_ANALOGUES/mat_files
@@ -27,5 +26,6 @@
 /data/TITAN_MAPPED_CHANNELS/Punga
 /data/TITAN_MAPPED_CHANNELS/SouthEx2
 /data/TITAN_MAPPED_CHANNELS/SouthEx3
-data/counters.mat
 /functions/old_scripts
+/data
+/results

@@ -1,12 +1,16 @@
 function my_sin = calc_sinuosity(x,y,ellipsoid)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % function calculates the sinusoity of the channel where Sin > 1 always
 % and larger Sin describes more windy path
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % INPUTS:
 %       x         = longitude in degrees
 %       y         = latitude in degrees
 %       ellipsoid = structure containing planet's semimajor axis in meters
 % OUTPUTS:
 %       my_sin    = sinuosity (alongpath distance / straight path distance)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
         R = ellipsoid.SemimajorAxis; % m
 

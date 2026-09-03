@@ -1,8 +1,18 @@
 function [east,north,up] = deg2meters(lat,lon,ellipsoid,lat0,lon0)
-  
-    % east = tangent to Titan's surface pointing towards increasing longitude
-    % north = tangent to Titan's surface pointing towards increasing latitude
-    % up = pointing away from surface radially (will decrease or increase due to Titan's curvature relative to the tangent plane)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% convert distance from degrees to meters (ENU)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% INPUT:
+%   lat                 : latitude of points (deg)
+%   lon                 : longitude of points (deg)
+%   ellipsoid           : ellipsoid to use (e.g., ellipsoid = [2575000,0] for Titan)
+%   lat0                : reference latitude (deg)
+%   lon0                : reference longitude (deg)
+% OUTPUT
+%   east                : tangent to Titan's surface pointing towards increasing longitude (m) 
+%   north               : tangent to Titan's surface pointing towards increasing latitude (m)
+%   up                  : pointing away from surface radially (will decrease or increase due to Titan's curvature relative to the tangent plane) (m)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     planet_R = ellipsoid.SemimajorAxis;
 

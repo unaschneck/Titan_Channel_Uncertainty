@@ -1,6 +1,7 @@
 function [filtered_names,filtered_segs] = remove_low_quality_SAR(pos_swaths,pos_seg)
-% Only look at data points for which there is High Res SAR data (radar modes 3 and 11)
-%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% remove swaths for which there is High Res SAR data (radar modes 3 and 11)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % INPUT:
 %   pos_swaths     = swath numbers that correspond to an observation (e.g., 55, 56)
 %   pos_seg        = associated segment number for swath ID
@@ -9,9 +10,8 @@ function [filtered_names,filtered_segs] = remove_low_quality_SAR(pos_swaths,pos_
 %   filtered_names = swath numbers that correspond to an observation AND have high res
 %                    radar data available (e.g., 56)
 %   filtered_segs  = associated segment numbers that correspond to filtered_names
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-     
      filtered_names = [];
      filtered_segs  = [];
         for i =  1:numel(pos_swaths)

@@ -1,10 +1,22 @@
 function [x_sar,y_sar,x_min,y_min,sub_sar,brightness_vals] = extract_brightness(x_left,y_left,x_right,y_right,sar_data,sar_file)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % extracts the brightness of the feature pixels 
-
-% OUTPUT:
-%   x_sar                           : grid of x coordinates for brightness pixels in subset of sar data with a river
-%   y_sar                           : grid of y coordinates for brightness pixels in subset of sar data with a river
-%   sub_sar                         : grid of pixe
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% INPUTS
+%   x_left           : row pixel coordinates of left bank
+%   y_left           : col pixel coordinate of left bank
+%   x_right          : row pixel coordinates of right bank
+%   y_right          : col pixel coordinates of right bank
+%   sar_data         : normalized radar backscatter values 
+%   sar_file         : file name with normalized radar backscatter values
+% OUTPUTS
+%   x_sar            : grid of x coordinates for brightness pixels in subset of sar data with a river
+%   y_sar            : grid of y coordinates for brightness pixels in subset of sar data with a river
+%   x_min            : starting column for subset of full data
+%   y_min            : starting row for subset of full data
+%   sub_sar          : subset grid of sar pixels containing river
+%   brightness_vals  : brightness values of subset of grid containing river
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 make_plot = 1;
 

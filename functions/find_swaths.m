@@ -1,6 +1,7 @@
 function [swath_number,swath_resolution,final_seg] = find_swaths(feature_lat,feature_lon,ellipsoid)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % identify the swaths that contain input coordinates
-%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % INPUT:
 %   feature_lat = latitude coordinates of river feature
 %   feature_lon = longitude coordinates of river feature
@@ -10,6 +11,7 @@ function [swath_number,swath_resolution,final_seg] = find_swaths(feature_lat,fea
 %   swath_number     = swath IDs containing all feature points
 %   swath_resolution = meter per pixel at the center of the feature
 %   final_seg        = segment number for swath IDS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 persistent LAT LON swath seg % make these persistent so counter doesn't have to be reloaded each time which takes forever
