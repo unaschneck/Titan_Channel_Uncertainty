@@ -69,9 +69,10 @@ res_width_fig = figure('Name','Res vs Width');
 ax1 = gca;
 xlabel('Resolution (m/pixel)')
 ylabel('Width (m)')
-axis([0 400 0 800])
+axis([0 400 0 1400])
 grid on;
-hold on
+hold on;
+
 
 mycolor = orderedcolors("dye");
 
@@ -83,17 +84,28 @@ for i = 1:numel(EARTH_RIVERS)
 
     for j = 1:numel(RES_FILES)
 
-            shp_data_loc = fullfile(data_dir,EARTH_RIVERS{i},'shapefiles',RES_FILES{j});
+            shp_data_loc = fullfile(data_dir,EARTH_RIVERS{i},'Una','shapefiles',RES_FILES{j});
 
             % extract centerline and bank data from shapefile
             [x_center,y_center,x_leftedge,y_leftedge,x_rightedge,y_rightedge] = extract_from_shp(shp_data_loc,'Earth');
-            if isempty(x_leftedge)
-                warning('no available shapefile for %s at resolution %i m/pix\n',EARTH_RIVERS{i},RESOLUTIONS(j))
-                continue
+            if isempty(x_leftedge) | isempty(x_center) | isempty(x_rightedge)
+                error('no available shapefile for %s at resolution %i m/pix\n',EARTH_RIVERS{i},RESOLUTIONS(j))
             end
+            % 
+            % figure;
+            % plot(x_center,y_center,'-k')
+            % hold on
+            % plot(x_leftedge,y_leftedge,'-r')
+            % plot(x_rightedge,y_rightedge,'-b')
 
             % make sure the lines are mapped in the same orientation downstream
             [x_center,y_center,x_leftedge,y_leftedge,x_rightedge,y_rightedge] = fix_mapping_order(x_center,y_center,x_leftedge,y_leftedge,x_rightedge,y_rightedge);
+    
+            % figure;
+            % plot(x_center,y_center,'-k')
+            % hold on
+            % plot(x_leftedge,y_leftedge,'-r')
+            % plot(x_rightedge,y_rightedge,'-b')
 
             % interpolate the centerline to be evenly spaced
             [lat_center,lon_center] = even_geodesic_spacing(y_center,x_center,num_points,ellipsoid);
@@ -101,6 +113,19 @@ for i = 1:numel(EARTH_RIVERS)
             [lat_left,lon_left] = even_geodesic_spacing(y_leftedge,x_leftedge,num_points,ellipsoid);
             % interpolate the right bank
             [lat_right,lon_right] = even_geodesic_spacing(y_rightedge,x_rightedge,num_points,ellipsoid);
+
+            % figure;
+            % plot(lon_center,lat_center,'-k')
+            % hold on
+            % plot(lon_left,lat_left,'-r')
+            % plot(lon_right,lat_right,'-b')
+            % 
+            % figure;
+            % geoplot(lat_center,lon_center,'-r')
+            % hold on
+            % geoplot(lat_left,lon_left,'-b')
+            % geoplot(lat_right,lon_right,'-k')
+            % geobasemap satellite
 
             % calculate river width along channel
             river_width = calc_river_width(lat_left,lon_left,lat_right,lon_right,ellipsoid);
@@ -155,22 +180,10 @@ for i = 1:numel(EARTH_RIVERS)
             ylim([0 max(river_width)+100])
             drawnow;
 
-            radar_data_loc = fullfile(data_dir,EARTH_RIVERS{i},'rasters',[RES_FILES{j} '.tif']);
-           
-            % extract brightness data of channel
-            [x_feature,y_feature,radar_vals,brightness_vals] = extract_earth_RADAR(radar_data_loc,lon_left,lat_left,lon_right,lat_right);
+            saveas(path_downstream_fig,fullfile(results_dir,['EARTH_channelpath_' EARTH_RIVERS{i} '_' num2str(RESOLUTIONS(j)) '.png']))
 
-            % transform into meters relative to starting position in local east, north, up coordinates (ENU)
-           [x_center, y_center]           = deg2meters(lat_center,lon_center,ellipsoid,lat_center(1),lon_center(1));
-           [x_left, y_left]               = deg2meters(lat_left,lon_left, ellipsoid,lat_center(1),lon_center(1));
-           [x_right, y_right]             = deg2meters(lat_right,lon_right,ellipsoid,lat_center(1),lon_center(1));
 
-           % calculate downstream brightness
-           
-           [downstream_brightness_distance,brightness_profile] = calc_brightness_profile_downstream(x_feature,y_feature,radar_vals,brightness_vals,x_left,y_left,x_right,y_right,downstream_distance,num_subdivisions)
-           % 
-           %  % calculate cross stream brightness and contrast
-           % 
+            all_width{i,j} = river_width;
 
 
 
@@ -182,4 +195,117 @@ end
 
 legend(ax1,'show')
 
-%saveas(channel_fig,fullfile(results_dir,['EARTH_channel_path.png']))
+%saveas(res_width_fig,fullfile(results_dir,'EARTH_channel_width_v_res.png'))
+
+
+mycolor1 = hex2rgb('#ab3428');
+mycolor2 = hex2rgb('#2d728f');
+close all
+
+figure('Name','Width Error')
+hold on
+
+for i = 1:3
+
+    true_width = all_width{i,1}(:);
+    high_width = all_width{i,2}(:);
+    low_width  = all_width{i,3}(:);
+
+    % Valid paired observations
+    valid_high = ~isnan(true_width) & ~isnan(high_width);
+    valid_low  = ~isnan(true_width) & ~isnan(low_width);
+
+    diff_high = true_width(valid_high) - high_width(valid_high);
+    diff_low  = true_width(valid_low) - low_width(valid_low);
+
+    histogram(diff_high,'BinEdges',-1005:50:1005,'FaceColor',mycolor1,'DisplayName','175 m/pixel')
+    histogram(diff_low,'BinEdges',-1005:50:1005,'FaceColor',mycolor2,'DisplayName','350 m/pixel (Cassini)')
+    xline(mean(diff_high(:),'omitmissing'),'--','Color',mycolor1,'LineWidth',2,'HandleVisibility','off')
+    xline(mean(diff_low(:),'omitmissing'),'--','Color',mycolor2,'LineWidth',2,'HandleVisibility','off')
+    xlabel('error in width (m)')
+    ylabel('#')
+    legend('show')
+    grid on;
+    title(sprintf('%s original width of %0.1f %s %0.1f m',EARTH_RIVERS{i},mean(true_width(:),'omitmissing'),char(177),std(true_width(:),'omitmissing')))
+   
+
+
+end
+
+figure;
+hold on
+
+for i = 1:3
+
+    true_width = all_width{i,1}(:);
+    high_width = all_width{i,2}(:);
+    low_width  = all_width{i,3}(:);
+
+    
+    valid_high = ~isnan(true_width) & ~isnan(high_width);
+    valid_low  = ~isnan(true_width) & ~isnan(low_width);
+    %Background observations
+    scatter(true_width(valid_high), high_width(valid_high), ...
+        18, mycolor1, 'filled', ...
+        'MarkerFaceAlpha',0.1, ...
+        'MarkerEdgeAlpha',0.1, ...
+        'HandleVisibility','off');
+
+    scatter(true_width(valid_low), low_width(valid_low), ...
+        18, mycolor2, 'filled', ...
+        'MarkerFaceAlpha',0.1, ...
+        'MarkerEdgeAlpha',0.1, ...
+        'HandleVisibility','off');
+
+    %Means
+    x = mean(true_width,'omitnan');
+
+    y_high = mean(high_width,'omitnan');
+    y_low  = mean(low_width,'omitnan');
+
+    sd_high = std(high_width,'omitnan');
+    sd_low  = std(low_width,'omitnan');
+
+    %175 m/pixel
+    p = errorbar(x, y_high, sd_high, ...
+        'o', ...
+        'Color',mycolor1, ...
+        'MarkerFaceColor',mycolor1, ...
+        'MarkerEdgeColor','k', ...
+        'MarkerSize',10, ...
+        'LineWidth',2.5, ...
+        'CapSize',14, ...
+        'DisplayName','175 m/pixel');
+
+    %30 m/pixel
+    p2 = errorbar(x, y_low, sd_low, ...
+        'o', ...
+        'Color',mycolor2, ...
+        'MarkerFaceColor',mycolor2, ...
+        'MarkerEdgeColor','k', ...
+        'MarkerSize',10, ...
+        'LineWidth',2.5, ...
+        'CapSize',14, ...
+        'DisplayName','30 m/pixel');
+end
+
+
+plot([0 2100],[0 2100], ...
+    '--', ...
+    'Color','k', ...
+    'LineWidth',1.5, ...
+    'HandleVisibility','off');
+
+%% Formatting
+xlim([0 1500])
+ylim([0 2100])
+%axis equal
+grid on
+xlabel('True width (m)','FontSize',14)
+ylabel('Measured width (m)','FontSize',14)
+
+
+
+legend([p2(1) p(1)],'Location','northwest')
+
+set(findall(gcf,'-property','FontSize'),'FontSize',12)

@@ -43,15 +43,53 @@ function [x_center,y_center,x_leftedge,y_leftedge,x_rightedge,y_rightedge] = ext
     end
     
     warning('off','map:shapefile:buildingIndexFromSHP'); 
-    fs = shaperead(feature_shp);
     
-    % Check for and get rid of nan nodes
-    x_center = fs.X(~isnan(fs.X))';
-    y_center = fs.Y(~isnan(fs.Y))';
-    
-    leftbank = shaperead(leftbank_shp);
-    rightbank = shaperead(rightbank_shp);
-    
+    if strcmp(planet,'Earth')
+        [x_center,y_center]       = extract_coordinates_polylineZ(feature_shp);
+        % disp(['X = ' num2str(x_center(1))])
+        % disp(['Y = ' num2str(y_center(1))])
+
+        [leftbank.X,leftbank.Y]   = extract_coordinates_polylineZ(leftbank_shp);
+        % disp(['X = ' num2str(leftbank.X(1))])
+        % disp(['Y = ' num2str(leftbank.Y(1))])
+
+        [rightbank.X,rightbank.Y] = extract_coordinates_polylineZ(rightbank_shp);
+        % disp(['X = ' num2str(rightbank.X(1))])
+        % disp(['Y = ' num2str(rightbank.Y(1))])
+
+        if ~contains(feature_name,"Canada")
+            crs          =  projcrs(3857);
+            [rightbank.lat,rightbank.lon] = projinv(crs,rightbank.X,rightbank.Y);
+            % disp(['Lat = ' num2str(rightbank.lat(1))])
+            % disp(['Lon = ' num2str(rightbank.lon(1))])
+            [leftbank.lat,leftbank.lon] = projinv(crs,leftbank.X,leftbank.Y);
+            % disp(['Lat = ' num2str(leftbank.lat(1))])
+            % disp(['Lon = ' num2str(leftbank.lon(1))])
+            [y_center,x_center]          = projinv(crs,x_center,y_center);
+            % disp(['Lat = ' num2str((x_center(1)))])
+            % disp(['Lon = ' num2str(y_center(1))])
+        else
+            rightbank.lat = rightbank.X; 
+            rightbank.lon = rightbank.Y;
+            leftbank.lat = leftbank.X;
+            leftbank.lon = leftbank.Y;
+        end
+
+        % figure;
+        % plot(x_center,y_center,'-k')
+        % hold on
+        % plot(leftbank.lon,leftbank.lat,'-b')
+        % plot(rightbank.lon,rightbank.lat,'-r')
+        
+    elseif strcmp(planet,'Titan')
+        fs = shaperead(feature_shp);
+        % Check for and get rid of nan nodes
+        x_center = fs.X(~isnan(fs.X))';
+        y_center = fs.Y(~isnan(fs.Y))';
+        leftbank = shaperead(leftbank_shp);
+        rightbank = shaperead(rightbank_shp);
+    end
+
     if strcmp(feature_name,'EquatorialEx')
         % Note from Frank:
         % Shapefiles of EquatorialEx have a mistake, and are subdivided into
@@ -74,11 +112,19 @@ function [x_center,y_center,x_leftedge,y_leftedge,x_rightedge,y_rightedge] = ext
         y_leftedge = rmmissing(y_leftedge);
         x_rightedge = rmmissing(x_rightedge);
         y_rightedge = rmmissing(y_rightedge);
-    else
+    elseif strcmp(planet,'Titan')
+
         x_leftedge = rmmissing(leftbank.X);
         y_leftedge = rmmissing(leftbank.Y);
         x_rightedge = rmmissing(rightbank.X);
         y_rightedge = rmmissing(rightbank.Y);
+    elseif strcmp(planet,'Earth')
+
+        x_leftedge = rmmissing(leftbank.lon);
+        y_leftedge = rmmissing(leftbank.lat);
+        x_rightedge = rmmissing(rightbank.lon);
+        y_rightedge = rmmissing(rightbank.lat);
+
     end
     
     
@@ -86,5 +132,15 @@ function [x_center,y_center,x_leftedge,y_leftedge,x_rightedge,y_rightedge] = ext
     y_leftedge = y_leftedge(:);
     x_rightedge = x_rightedge(:);
     y_rightedge = y_rightedge(:);
+    x_center = x_center(:);
+    y_center = y_center(:);
+
+     function [X,Y]  = extract_coordinates_polylineZ(shapefile)
+        GT = readgeotable(shapefile);
+        T = geotable2table(GT,["Lat","Lon"]); 
+        X = T.Lat{1};
+        Y = T.Lon{1};
+        
+     end
 
 end
